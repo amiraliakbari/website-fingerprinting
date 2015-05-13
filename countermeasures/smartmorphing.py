@@ -42,7 +42,12 @@ class SmartMorphing(CounterMeasure):
             alg = self.params['CLUSTERING_ALGORITHM']
             print('WEBPAGE', int(self.trace.webpage))
             self.cur.execute('SELECT MBC9, PAM10, SOM10 FROM ClustTable WHERE site_id=%s', [int(self.trace.webpage)])
-            src_clust = int(round(self.cur.fetchone()[{'MBC9':0,'PAM10':1,'SOM10':2}[alg]], 0))
+            site_row = self.cur.fetchone()
+            if site_row is None:
+                print '[ERROR] webpage#{} not found in DB, assuming src_cluster 1.'.format(int(self.trace.webpage))
+                src_clust = 1
+            else:
+                src_clust = int(round(site_row[{'MBC9':0,'PAM10':1,'SOM10':2}[alg]], 0))
             print('SRC-CLUST', src_clust)
             dst_clust = cluster_distances[src_clust][self.D - 1]
             print('DST-CLUST', dst_clust)
@@ -61,6 +66,8 @@ class SmartMorphing(CounterMeasure):
                                  dst_trace.filter_direction(Packet.DOWN))
         for p in trace_up.packets:  # trace_down is already in self.new_trace
             self.add_packet(p)
+        # print map(Packet.get_details, self.trace.packets)
+        # print map(Packet.get_details, self.new_trace.packets)
 
     def morph_trace_one_way(self, src_trace, dst_trace):
         self.build_new_trace()

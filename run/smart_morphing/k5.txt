@@ -1,0 +1,76 @@
+python main.py -k 5 -d 1 -C 0 -c 12
+[INFO] |dataset|=160	|training-set|=16, |testing-set|=4
+Run #0
+[INFO] selected webpages: [144, 463, 619, 537, 366]
+.WebPage#144 (4 traces) WebPage#144 (16 traces)
+('WEBPAGE', 144)
+('SRC-CLUST', 9)
+('DST-CLUST', 8)
+('SELECTED-SITE', 1522)
+('SEL-TRACE', 56662L)
+Trace#56662 (202 packets, site: 1522, +20304/-207464)
+.WebPage#463 (4 traces) WebPage#463 (16 traces)
+.WebPage#619 (4 traces) WebPage#619 (16 traces)
+.WebPage#537 (4 traces) WebPage#537 (16 traces)
+.WebPage#366 (4 traces) WebPage#366 (16 traces)
+
+Picked up JAVA_TOOL_OPTIONS: -javaagent:/usr/share/java/jayatanaag.jar
+[INFO] sites detected correctly:	webpage144, webpage144, webpage144, webpage144, webpage463, webpage463, webpage463, webpage463, webpage619, webpage619, webpage619, webpage619, webpage537, webpage537, webpage537, webpage537, webpage366, webpage366, webpage366, webpage366
+[INFO] sites detected incorrectly:
+[INFO] Run summary: (LiberatoreClassifier, SmartMorphing)
+[INFO] 	accuracy:	100.0%
+[INFO] 	overhead:	52103668/33832792 bytes (54.0%), 31787806/514648 ms (6076.6%)
+[INFO] 	duration:	384.2s
+
+====================================================================================================
+
+python main.py -k 5 -d 1 -C 0 -c 12
+[INFO] |dataset|=160	|training-set|=16, |testing-set|=4
+Run #0
+[INFO] selected webpages: [332, 322, 687, 112, 274]
+.WebPage#332 (4 traces) WebPage#332 (16 traces)
+('WEBPAGE', 332)
+[ERROR] webpage#332 not found in DB, assuming src_cluster 1.
+('SRC-CLUST', 1)
+('DST-CLUST', 7)
+('SELECTED-SITE', 3325)
+('SEL-TRACE', 61448L)
+Trace#61448 (267 packets, site: 3325, +37824/-68636)
+.WebPage#322 (4 traces) WebPage#322 (16 traces)
+.WebPage#687 (4 traces) WebPage#687 (16 traces)
+.WebPage#112 (4 traces) WebPage#112 (16 traces)
+.WebPage#274 (4 traces) WebPage#274 (16 traces)
+
+Picked up JAVA_TOOL_OPTIONS: -javaagent:/usr/share/java/jayatanaag.jar
+[INFO] sites detected correctly:	webpage332, webpage332, webpage332, webpage332, webpage322, webpage322, webpage322, webpage687, webpage687, webpage687, webpage687, webpage112, webpage112, webpage112, webpage112, webpage274, webpage274, webpage274, webpage274
+[INFO] sites detected incorrectly:	webpage322
+[INFO] Run summary: (LiberatoreClassifier, SmartMorphing)
+[INFO] 	accuracy:	95.0%
+[INFO] 	overhead:	148259192/141634272 bytes (4.7%), 7529531394/464821 ms (1619777.6%)
+[INFO] 	duration:	616.2s
+
+====================================================================================================
+
+python main.py -k 128 -d 1 -C 0 -c 12
+[INFO] |dataset|=160	|training-set|=16, |testing-set|=4
+Run #0
+[INFO] selected webpages: [359, 302, 593, 367, 64, 708, 246, 634, 608, 621, 476, 656, 366, 619, 589, 130, 4, 483, 345, 558, 293, 729, 573, 333, 69, 86, 715, 299, 766, 462, 365, 208, 670, 268, 306, 329, 323, 465, 194, 564, 430, 182, 542, 718, 477, 175, 740, 693, 261, 207, 138, 67, 436, 688, 71, 755, 723, 106, 545, 502, 548, 146, 42, 179, 681, 159, 37, 455, 559, 399, 205, 753, 170, 456, 231, 46, 550, 115, 20, 244, 327, 447, 613, 625, 761, 594, 438, 767, 663, 177, 657, 655, 35, 65, 118, 31, 137, 760, 348, 9, 227, 286, 420, 63, 362, 660, 499, 510, 463, 226, 317, 334, 398, 119, 82, 188, 271, 744, 506, 501, 301, 659, 274, 719, 33, 642, 55, 385]
+.WebPage#359 (4 traces) WebPage#359 (16 traces)
+('WEBPAGE', 359)
+('SRC-CLUST', 1)
+('DST-CLUST', 7)
+('SELECTED-SITE', 8800)
+('SEL-TRACE', 408636L)
+Trace#408636 (204 packets, site: 8800, +15968/-47446)
+...
+
+Picked up JAVA_TOOL_OPTIONS: -javaagent:/usr/share/java/jayatanaag.jar
+[INFO] sites detected correctly:	webpage359, webpage359, webpage359, webpage359, webpage302, webpage302, webpage302, webpage593, webpage593, webpage593, webpage593, webpage367, webpage367, webpage367, webpage367, webpage64, webpage708, webpage708, webpage708, webpage708, webpage246, webpage246, webpage246, webpage246, webpage634, webpage634, webpage634, webpage634, webpage608, webpage608, webpage608, webpage608, webpage621, webpage621, webpage621, webpage621, webpage476, webpage476, webpage476, webpage476, webpage656, webpage656, webpage656, webpage656, webpage366, webpage366, webpage366, webpage366, webpage619, webpage619, webpage619, webpage619, webpage589, webpage589, webpage589, webpage589, webpage130, webpage130, webpage130, webpage130, webpage4, webpage4, webpage4, webpage4, webpage483, webpage483, webpage483, webpage345, webpage345, webpage345, webpage345, webpage558, webpage558, webpage558, webpage558, webpage293, webpage293, webpage293, webpage293, webpage729, webpage729, webpage729, webpage729, webpage573, webpage573, webpage573, webpage573, webpage333, webpage333, webpage333, webpage69, webpage69, webpage69, webpage69, webpage86, webpage86, webpage86, webpage86, webpage715, webpage715, webpage715, webpage715, webpage299, webpage299, webpage299, webpage766, webpage766, webpage766, webpage766, webpage462, webpage462, webpage462, webpage462, webpage365, webpage365, webpage365, webpage365, webpage208, webpage208, webpage208, webpage208, webpage670, webpage670, webpage670, webpage670, webpage268, webpage268, webpage268, webpage306, webpage306, webpage306, webpage306, webpage329, webpage329, webpage329, webpage329, webpage323, webpage323, webpage323, webpage465, webpage465, webpage465, webpage465, webpage194, webpage194, webpage194, webpage194, webpage564, webpage564, webpage564, webpage564, webpage430, webpage430, webpage430, webpage430, webpage182, webpage182, webpage182, webpage182, webpage542, webpage542, webpage542, webpage542, webpage718, webpage718, webpage718, webpage718, webpage477, webpage477, webpage477, webpage477, webpage175, webpage175, webpage175, webpage740, webpage693, webpage693, webpage693, webpage693, webpage261, webpage261, webpage261, webpage207, webpage207, webpage207, webpage207, webpage138, webpage138, webpage138, webpage138, webpage67, webpage67, webpage67, webpage67, webpage436, webpage436, webpage436, webpage436, webpage688, webpage688, webpage688, webpage688, webpage71, webpage71, webpage71, webpage71, webpage755, webpage755, webpage755, webpage755, webpage723, webpage723, webpage723, webpage723, webpage106, webpage106, webpage106, webpage106, webpage545, webpage545, webpage545, webpage545, webpage502, webpage502, webpage502, webpage502, webpage548, webpage548, webpage548, webpage548, webpage146, webpage146, webpage146, webpage146, webpage42, webpage42, webpage42, webpage42, webpage179, webpage179, webpage179, webpage179, webpage681, webpage681, webpage681, webpage681, webpage159, webpage159, webpage159, webpage159, webpage37, webpage37, webpage37, webpage37, webpage455, webpage455, webpage455, webpage455, webpage559, webpage559, webpage559, webpage559, webpage399, webpage399, webpage399, webpage399, webpage205, webpage205, webpage205, webpage753, webpage753, webpage753, webpage753, webpage170, webpage170, webpage456, webpage456, webpage456, webpage456, webpage231, webpage231, webpage231, webpage231, webpage46, webpage46, webpage46, webpage46, webpage550, webpage550, webpage550, webpage550, webpage115, webpage115, webpage20, webpage20, webpage20, webpage244, webpage244, webpage244, webpage327, webpage327, webpage327, webpage327, webpage447, webpage447, webpage447, webpage447, webpage613, webpage613, webpage613, webpage613, webpage625, webpage625, webpage761, webpage761, webpage761, webpage761, webpage594, webpage594, webpage594, webpage594, webpage438, webpage438, webpage438, webpage438, webpage767, webpage767, webpage767, webpage767, webpage663, webpage663, webpage663, webpage663, webpage177, webpage177, webpage177, webpage657, webpage657, webpage657, webpage657, webpage655, webpage655, webpage655, webpage655, webpage35, webpage35, webpage35, webpage35, webpage65, webpage65, webpage65, webpage65, webpage118, webpage118, webpage118, webpage118, webpage31, webpage31, webpage31, webpage31, webpage137, webpage137, webpage137, webpage137, webpage760, webpage760, webpage760, webpage760, webpage348, webpage348, webpage348, webpage348, webpage9, webpage9, webpage9, webpage227, webpage227, webpage227, webpage227, webpage286, webpage286, webpage286, webpage420, webpage420, webpage420, webpage420, webpage63, webpage63, webpage63, webpage63, webpage362, webpage362, webpage362, webpage362, webpage660, webpage660, webpage660, webpage660, webpage499, webpage499, webpage499, webpage499, webpage510, webpage510, webpage510, webpage510, webpage463, webpage463, webpage463, webpage463, webpage226, webpage226, webpage226, webpage226, webpage317, webpage317, webpage317, webpage317, webpage334, webpage334, webpage334, webpage334, webpage398, webpage398, webpage398, webpage398, webpage119, webpage119, webpage119, webpage82, webpage82, webpage82, webpage82, webpage188, webpage188, webpage188, webpage188, webpage271, webpage271, webpage271, webpage271, webpage744, webpage744, webpage744, webpage744, webpage506, webpage506, webpage506, webpage506, webpage501, webpage501, webpage501, webpage501, webpage301, webpage301, webpage301, webpage659, webpage659, webpage659, webpage659, webpage274, webpage274, webpage274, webpage274, webpage719, webpage719, webpage719, webpage719, webpage33, webpage33, webpage642, webpage642, webpage642, webpage642, webpage55, webpage55, webpage55, webpage55, webpage385, webpage385, webpage385
+[INFO] sites detected incorrectly:	webpage302, webpage64, webpage64, webpage64, webpage483, webpage333, webpage299, webpage268, webpage323, webpage175, webpage740, webpage740, webpage740, webpage261, webpage205, webpage170, webpage170, webpage115, webpage115, webpage20, webpage244, webpage625, webpage625, webpage177, webpage9, webpage286, webpage119, webpage301, webpage33, webpage33, webpage385
+[INFO] Run summary: (LiberatoreClassifier, SmartMorphing)
+[INFO] 	accuracy:	93.9453125%
+[INFO] 	overhead:	918842935/790497232 bytes (16.2%), 16872709202/12310023 ms (136964.8%)
+[INFO] 	duration:	1982.1s
+
+
+====================================================================================================
