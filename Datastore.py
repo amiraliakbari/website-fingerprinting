@@ -108,6 +108,7 @@ class Datastore:
             data = cursor.fetchall()
             trace = Trace(webpageId)
             for item in data:
+                trace.setId(int(item[0]))
                 direction = Packet.UP
                 if int(item[1])>0:
                     direction = Packet.DOWN

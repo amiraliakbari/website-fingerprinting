@@ -36,11 +36,12 @@ class SmartMorphing(CounterMeasure):
         self.D2 = 100 + self.D * self.params['BANDWIDTH_D_FACTOR']
 
     def apply(self):
+        # print 'applying countermeasure'
         if self.dst_trace is None:
             if self.cur is None:
                 self.cur = self.conn.cursor()
             alg = self.params['CLUSTERING_ALGORITHM']
-            print('WEBPAGE', int(self.trace.webpage))
+            # print('WEBPAGE', int(self.trace.webpage))
             self.cur.execute('SELECT MBC9, PAM10, SOM10 FROM ClustTable WHERE site_id=%s', [int(self.trace.webpage)])
             site_row = self.cur.fetchone()
             if site_row is None:
@@ -48,16 +49,21 @@ class SmartMorphing(CounterMeasure):
                 src_clust = 1
             else:
                 src_clust = int(round(site_row[{'MBC9':0,'PAM10':1,'SOM10':2}[alg]], 0))
-            print('SRC-CLUST', src_clust)
+            # print('SRC-CLUST', src_clust)
             dst_clust = cluster_distances[src_clust][self.D - 1]
-            print('DST-CLUST', dst_clust)
+            # print('DST-CLUST', dst_clust)
             self.cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT 1'.format(alg), (dst_clust,))
             selected_site_id = int(round(self.cur.fetchone()[0], 0))
-            print('SELECTED-SITE', selected_site_id)
+            # print('SELECTED-SITE', selected_site_id)
             sample_trace = Datastore.get_trace(site_id=selected_site_id)
-            print sample_trace
+            # print sample_trace
             self.dst_trace = sample_trace
+
+        # print self.trace.get_sizes_str()
+        # print self.dst_trace.get_sizes_str()
         self.morph_trace(self.trace, self.dst_trace)
+        # print self.new_trace.get_sizes_str()
+        # print ''
 
     def morph_trace(self, src_trace, dst_trace):
         trace_up = self.morph_trace_one_way(src_trace.filter_direction(Packet.UP),
@@ -66,8 +72,6 @@ class SmartMorphing(CounterMeasure):
                                  dst_trace.filter_direction(Packet.DOWN))
         for p in trace_up.packets:  # trace_down is already in self.new_trace
             self.add_packet(p)
-        # print map(Packet.get_details, self.trace.packets)
-        # print map(Packet.get_details, self.new_trace.packets)
 
     def morph_trace_one_way(self, src_trace, dst_trace):
         self.build_new_trace()

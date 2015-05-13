@@ -36,11 +36,23 @@ class Trace:
             self.getBandwidth(Packet.DOWN),
         )
 
+    def get_sizes_str(self):
+        s = '{}: '.format(self.__id)
+        for p in self.__packetArray:
+            size = p.size
+            if p.getDirection() == Packet.UP:
+                size = -size
+            s += ' ' + str(size)
+        return s
+
     def __str__(self):
         return unicode(self)
 
     def getId(self):
         return self.__id
+
+    def setId(self, id):
+        self.__id = id
 
     def getPacketCount(self, direction=None):
         return len(self.getPackets(direction))
