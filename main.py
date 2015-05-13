@@ -16,6 +16,8 @@ import getopt
 import string
 import itertools
 
+import MySQLdb as mdb
+
 import config
 
 from Datastore import Datastore
@@ -132,7 +134,10 @@ def error(*args, **kwargs):
         sys.exit(ex)
 
 
-def run():
+calc_overhead = lambda n, o: ('{}/{}'.format(n, o), ((n * 1.0 / o) - 1) * 100)
+
+
+def read_arguments():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "t:T:N:k:c:C:d:n:r:h:p:P")
     except getopt.GetoptError, err:
@@ -171,6 +176,89 @@ def run():
         else:
             usage()
             sys.exit(2)
+
+    return run_id, countermeasure_params, classifier_params
+
+def set_params(obj, params_str):
+    params = params_str.split(',')
+    for p in params:
+        if not p or not p.strip():
+            continue
+        try:
+            attr, val = p.strip().split('=', 1)
+        except ValueError:
+            error('Invalid parameter:', p)
+            return 3
+        try:
+            val = int(val)
+        except ValueError:
+            pass
+        obj.set_param(attr, val)
+
+def run_morphing():
+    run_id, countermeasure_params, classifier_params = read_arguments()
+
+    # Selecting Algorithms
+    classifier = int_to_classifier(config.CLASSIFIER)
+    countermeasure = int_to_countermeasure(config.COUNTERMEASURE)
+    classifier_name = classifier.__name__ if classifier else 'None'
+    countermeasure_name = countermeasure.__name__ if countermeasure else 'None'
+    countermeasure.initialize()
+    countermeasure = countermeasure()
+    set_params(countermeasure, countermeasure_params)
+
+    # Run
+    for run_index in range(config.NUM_TRIALS):
+        run_start_time = time.time()
+        print('Run #{}'.format(run_index))
+
+        # Selecting Sample Webpages
+        src_clust = 4
+        d = 7
+        k = config.BUCKET_SIZE
+        alg = 'PAM10'
+        dst_clust = config.cluster_distances[src_clust][d - 1]
+        print('cluster: {} -> {}'.format(src_clust, dst_clust))
+        conn = mdb.connect('localhost', config.MYSQL_USER, config.MYSQL_PASSWD, 'Harrmann')
+        cur = conn.cursor()
+        cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT 1'.format(alg), (dst_clust,))
+        D_site = cur.fetchone()[0]
+        web_pages = [D_site]
+        cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT {}'.format(alg, k-1), (src_clust,))
+        for s in cur.fetchall():
+            web_pages.append(s[0])
+        print('Webpages:', web_pages)
+
+        traces = []
+        for wp in web_pages:
+            t = Datastore.get_trace(site_id=wp)
+            traces.append(t)
+
+        rl = {'size': 0, 'time': 0}
+        ov = {'size': 0, 'time': 0}
+
+        D_trace = None
+        training = []
+        testing = []
+        for trace in traces:
+            if trace.webpage != D_site:
+                training.append([trace, trace.webpage])
+
+            if trace.webpage == D_site:
+                testing.append([trace, D_site])
+                D_trace = trace
+            else:
+                countermeasure.dst_trace = D_trace
+                morphed = countermeasure.apply_to_trace(trace)
+                testing.append([morphed, trace.webpage])
+                rl['size'] += trace.getBandwidth()
+                ov['size'] += morphed.getBandwidth()
+
+        print('Overhead:\n\tsize: {}, {:.0f}%\n\ttime: N/A'.format(*calc_overhead(ov['size'], rl['size'])))
+
+
+def run():
+    run_id, countermeasure_params, classifier_params = read_arguments()
 
     output_filename_list = [
         'results',
@@ -348,8 +436,6 @@ def run():
         run_end_time = time.time()
 
         # Write Output
-        calc_overhead = lambda n, o: ('{}/{}'.format(n, o), ((n * 1.0 / o) - 1) * 100)
-
         overhead, overhead_ratio = calc_overhead(modified_bandwidth, actual_bandwidth)
         overhead_t, overhead_ratio_t = calc_overhead(modified_timing, actual_timing)
         run_total_time = run_end_time - run_start_time
@@ -384,4 +470,4 @@ def run():
 
 
 if __name__ == '__main__':
-    sys.exit(run() or 0)
+    sys.exit(run_morphing() or 0)
