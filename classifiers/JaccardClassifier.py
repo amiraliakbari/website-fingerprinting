@@ -11,9 +11,9 @@ class JaccardClassifier:
         for p in trace.getPackets():
             instance[p.getLength()] = 1
         
-        instance['class'] = 'webpage'+str(trace.getId())
+        instance['class'] = 'webpage' + str(trace.webpage)
         return instance
-    
+
     @staticmethod
     def classify( runID, trainingSet, testingSet ):
         bagOfLengths = {}

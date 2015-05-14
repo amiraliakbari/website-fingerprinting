@@ -9,7 +9,7 @@ class LiberatoreClassifier:
     @staticmethod
     def traceToInstance( trace ):
         instance = trace.getHistogram()
-        instance['class'] = 'webpage'+str(trace.getId())
+        instance['class'] = 'webpage'+str(trace.webpage)
         return instance
     
     @staticmethod

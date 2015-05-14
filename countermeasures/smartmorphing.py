@@ -61,6 +61,7 @@ class SmartMorphing(CounterMeasure):
 
         # print self.trace.get_sizes_str()
         # print self.dst_trace.get_sizes_str()
+        print 'Morphing: {} -> {}'.format(self.trace, self.dst_trace)
         self.morph_trace(self.trace, self.dst_trace)
         # print self.new_trace.get_sizes_str()
         # print ''
@@ -72,6 +73,7 @@ class SmartMorphing(CounterMeasure):
                                  dst_trace.filter_direction(Packet.DOWN))
         for p in trace_up.packets:  # trace_down is already in self.new_trace
             self.add_packet(p)
+        self.new_trace.webpage = self.trace.webpage
 
     def morph_trace_one_way(self, src_trace, dst_trace):
         self.build_new_trace()
@@ -249,3 +251,7 @@ class SmartMorphing(CounterMeasure):
     @classmethod
     def initialize(cls):
         load_website_clusters()
+
+    @classmethod
+    def get_name(cls):
+        return 'Smart Morphing'

@@ -123,7 +123,7 @@ class Datastore:
         return trace
 
     @classmethod
-    def get_trace(cls, trace_id=None, site_id=None, dataset=2):
+    def get_trace(cls, trace_id=None, site_id=None, dataset=2, limit=1, multi=False):
         if cls.conn is None:
             cls.conn = MySQLdb.connect(host=config.MYSQL_HOST,
                                        user=config.MYSQL_USER,
@@ -131,21 +131,30 @@ class Datastore:
                                        db=config.MYSQL_DB)
         cur = cls.conn.cursor()
         if trace_id is None:
-            cur.execute('SELECT id FROM traces where site_id=%s ORDER BY RAND() LIMIT 1', [site_id])
-            trace_id = cur.fetchone()[0]
-            print('SEL-TRACE', trace_id)
+            cur.execute('SELECT id FROM traces where site_id=%s ORDER BY RAND() LIMIT {}'.format(limit), [site_id])
+            if limit == 1:
+                trace_ids = [cur.fetchone()[0]]
+            else:
+                trace_ids = [r[0] for r in cur.fetchall()]
+        else:
+            trace_ids = [trace_id]
+        # print('SEL-TRACE', trace_ids)
 
-        cur.execute('SELECT size, ROUND(abstime*1000) FROM packets WHERE trace_id=%s ORDER BY abstime',
-                    [trace_id])
-        data = cur.fetchall()
-        trace = Trace(trace_id, webpage=site_id)
-        for item in data:
-            direction = Packet.UP
-            if int(item[0]) > 0:
-                direction = Packet.DOWN
-            time = item[1]
-            length = int(math.fabs(item[0]))
-            trace.addPacket(Packet(direction, time, length))
+        traces = []
+        for trace_id in trace_ids:
+            cur.execute('SELECT size, ROUND(abstime*1000) FROM packets WHERE trace_id=%s ORDER BY abstime',
+                        [trace_id])
+            data = cur.fetchall()
+            trace = Trace(trace_id, webpage=site_id)
+            for item in data:
+                direction = Packet.UP
+                if int(item[0]) > 0:
+                    direction = Packet.DOWN
+                time = item[1]
+                length = int(math.fabs(item[0]))
+                trace.addPacket(Packet(direction, time, length))
+            traces.append(trace)
 
-        # mc.set(key, cPickle.dumps(trace, protocol=cPickle.HIGHEST_PROTOCOL))
-        return trace
+        if limit == 1 and not multi:
+            return traces[0] if traces else None
+        return traces

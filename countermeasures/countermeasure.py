@@ -64,3 +64,7 @@ class CounterMeasure(object):
     @classmethod
     def initialize(cls):
         pass
+
+    @classmethod
+    def get_name(cls):
+        return 'Generic Countermeasure'

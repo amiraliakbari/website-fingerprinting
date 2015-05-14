@@ -134,7 +134,7 @@ def error(*args, **kwargs):
         sys.exit(ex)
 
 
-calc_overhead = lambda n, o: ('{}/{}'.format(n, o), ((n * 1.0 / o) - 1) * 100)
+calc_overhead = lambda n, o: ('{}/{}'.format(n, o), ((n * 1.0 / max(o, 1)) - 1) * 100)
 
 
 def read_arguments():
@@ -195,17 +195,62 @@ def set_params(obj, params_str):
             pass
         obj.set_param(attr, val)
 
+def report_summary(classification_result, output_filename='run/last_run',
+                   modified_bandwidth=0, actual_bandwidth=0,
+                   modified_timing=0, actual_timing=0,
+                   run_total_time=0, classification_total_time=0,
+                   classifier=None, countermeasure=None):
+    classifier_name = classifier.__name__ if classifier else 'None'
+    try:
+        countermeasure_name = countermeasure.__name__ if countermeasure else 'None'
+    except AttributeError:
+        countermeasure_name = countermeasure.get_name()
+    accuracy, debug_info = classification_result
+    overhead, overhead_ratio = calc_overhead(modified_bandwidth, actual_bandwidth)
+    overhead_t, overhead_ratio_t = calc_overhead(modified_timing, actual_timing)
+    output = [accuracy, overhead, '%.2f' % run_total_time, '%.2f' % classification_total_time]
+    summary = ', '.join(itertools.imap(str, output))
+    f = open(output_filename + '.output', 'a')
+    f.write('\n' + summary)
+    f.close()
+
+    # Processing Classification Results For Each Page
+    sites_detected = []
+    sites_not_detected = []
+    f = open(output_filename + '.debug', 'w')
+    for entry in debug_info:
+        if entry[0] == entry[1]:
+            sites_detected.append(entry[0])
+        else:
+            sites_not_detected.append(entry[0])
+        f.write(entry[0] + ',' + entry[1] + '\n')
+    f.close()
+
+    # Show A Brief Report To User
+    info('sites detected correctly:\t{}'.format(', '.join(sites_detected)))
+    info('sites detected incorrectly:\t{}'.format(', '.join(sites_not_detected)))
+    info('Run summary: ({}, {})'.format(classifier_name, countermeasure_name))
+    info('\taccuracy:\t{}%'.format(accuracy))
+    info('\toverhead:\t{} bytes ({:.1f}%), {} ms ({:.1f}%)'.format(overhead, overhead_ratio, overhead_t, overhead_ratio_t))
+    info('\tduration:\t{:.1f}s'.format(run_total_time))
+
+
 def run_morphing():
     run_id, countermeasure_params, classifier_params = read_arguments()
 
     # Selecting Algorithms
     classifier = int_to_classifier(config.CLASSIFIER)
     countermeasure = int_to_countermeasure(config.COUNTERMEASURE)
-    classifier_name = classifier.__name__ if classifier else 'None'
-    countermeasure_name = countermeasure.__name__ if countermeasure else 'None'
     countermeasure.initialize()
     countermeasure = countermeasure()
     set_params(countermeasure, countermeasure_params)
+
+    conn = mdb.connect('localhost', config.MYSQL_USER, config.MYSQL_PASSWD, 'Harrmann')
+
+    def select_random_site(cluster, algorithm='PAM10'):
+        c = conn.cursor()
+        c.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT 1'.format(algorithm), (cluster,))
+        return c.fetchone()[0]
 
     # Run
     for run_index in range(config.NUM_TRIALS):
@@ -216,45 +261,48 @@ def run_morphing():
         src_clust = 4
         d = 7
         k = config.BUCKET_SIZE
+        pt = config.NUM_TRAINING_TRACES
+        pT = config.NUM_TESTING_TRACES
         alg = 'PAM10'
         dst_clust = config.cluster_distances[src_clust][d - 1]
         print('cluster: {} -> {}'.format(src_clust, dst_clust))
         conn = mdb.connect('localhost', config.MYSQL_USER, config.MYSQL_PASSWD, 'Harrmann')
         cur = conn.cursor()
-        cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT 1'.format(alg), (dst_clust,))
-        D_site = cur.fetchone()[0]
-        web_pages = [D_site]
-        cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT {}'.format(alg, k-1), (src_clust,))
+        # cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT 1'.format(alg), (dst_clust,))
+        # D_site = cur.fetchone()[0]
+        # web_pages = [D_site]
+        web_pages = []
+        cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT {}'.format(alg, k), (src_clust,))
         for s in cur.fetchall():
             web_pages.append(s[0])
         print('Webpages:', web_pages)
 
-        traces = []
-        for wp in web_pages:
-            t = Datastore.get_trace(site_id=wp)
-            traces.append(t)
-
+        training = []
+        testing = []
         rl = {'size': 0, 'time': 0}
         ov = {'size': 0, 'time': 0}
 
-        D_trace = None
-        training = []
-        testing = []
-        for trace in traces:
-            if trace.webpage != D_site:
-                training.append([trace, trace.webpage])
-
-            if trace.webpage == D_site:
-                testing.append([trace, D_site])
-                D_trace = trace
-            else:
-                countermeasure.dst_trace = D_trace
-                morphed = countermeasure.apply_to_trace(trace)
-                testing.append([morphed, trace.webpage])
+        for wp in web_pages:
+            t = Datastore.get_trace(site_id=wp, limit=pt+pT, multi=True)
+            for i, trace in enumerate(t):
+                countermeasure.dst_trace = None
+                morphed_trace = countermeasure.apply_to_trace(trace)
                 rl['size'] += trace.getBandwidth()
-                ov['size'] += morphed.getBandwidth()
+                ov['size'] += morphed_trace.getBandwidth()
+                if i < pT:
+                    testing.append(morphed_trace)
+                elif i < pT + pt:
+                    training.append(morphed_trace)
+                else:
+                    break
 
         print('Overhead:\n\tsize: {}, {:.0f}%\n\ttime: N/A'.format(*calc_overhead(ov['size'], rl['size'])))
+
+        print('Classifying...')
+        training_set = [classifier.traceToInstance(t) for t in training]
+        testing_set = [classifier.traceToInstance(t) for t in testing]
+        cl = classifier.classify(run_index, training_set, testing_set)
+        report_summary(cl, classifier=classifier, countermeasure=countermeasure)
 
 
 def run():
@@ -316,8 +364,6 @@ def run():
     # Selecting Algorithms
     classifier = int_to_classifier(config.CLASSIFIER)
     countermeasure = int_to_countermeasure(config.COUNTERMEASURE)
-    classifier_name = classifier.__name__ if classifier else 'None'
-    countermeasure_name = countermeasure.__name__ if countermeasure else 'None'
     if issubclass(countermeasure, CounterMeasure):
         countermeasure.initialize()
         countermeasure = countermeasure()  # also instantiating
@@ -432,39 +478,12 @@ def run():
         # Classification
         print('')
         classification_start_time = time.time()
-        [accuracy, debug_info] = classifier.classify(run_id, training_set, testing_set)
+        cl = classifier.classify(run_id, training_set, testing_set)
         run_end_time = time.time()
-
-        # Write Output
-        overhead, overhead_ratio = calc_overhead(modified_bandwidth, actual_bandwidth)
-        overhead_t, overhead_ratio_t = calc_overhead(modified_timing, actual_timing)
         run_total_time = run_end_time - run_start_time
         classification_total_time = run_end_time - classification_start_time
-        output = [accuracy, overhead, '%.2f' % run_total_time, '%.2f' % classification_total_time]
-        summary = ', '.join(itertools.imap(str, output))
-        f = open(output_filename + '.output', 'a')
-        f.write('\n' + summary)
-        f.close()
-
-        # Processing Classification Results For Each Page
-        sites_detected = []
-        sites_not_detected = []
-        f = open(output_filename + '.debug', 'a')
-        for entry in debug_info:
-            if entry[0] == entry[1]:
-                sites_detected.append(entry[0])
-            else:
-                sites_not_detected.append(entry[0])
-            f.write(entry[0] + ',' + entry[1] + '\n')
-        f.close()
-
-        # Show A Brief Report To User
-        info('sites detected correctly:\t{}'.format(', '.join(sites_detected)))
-        info('sites detected incorrectly:\t{}'.format(', '.join(sites_not_detected)))
-        info('Run summary: ({}, {})'.format(classifier_name, countermeasure_name))
-        info('\taccuracy:\t{}%'.format(accuracy))
-        info('\toverhead:\t{} bytes ({:.1f}%), {} ms ({:.1f}%)'.format(overhead, overhead_ratio, overhead_t, overhead_ratio_t))
-        info('\tduration:\t{:.1f}s'.format(run_total_time))
+        report_summary(cl, output_filename=output_filename,
+                       classifier=classifier, countermeasure=countermeasure)
 
     return 0
 
