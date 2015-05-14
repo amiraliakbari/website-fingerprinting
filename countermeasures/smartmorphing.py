@@ -61,8 +61,9 @@ class SmartMorphing(CounterMeasure):
 
         # print self.trace.get_sizes_str()
         # print self.dst_trace.get_sizes_str()
-        print 'Morphing: {} -> {}'.format(self.trace, self.dst_trace)
+        print 'Morphing: {} -> {}'.format(self.trace, self.dst_trace),
         self.morph_trace(self.trace, self.dst_trace)
+        print '\t{:.2f}'.format(self.new_trace.size * 1.0 / max(1, self.trace.size) - 1)
         # print self.new_trace.get_sizes_str()
         # print ''
 

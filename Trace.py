@@ -109,6 +109,10 @@ class Trace:
 
         return totalBandwidth
 
+    @property
+    def size(self):
+        return sum(p.size for p in self.__packetArray)
+
     def getTime(self, direction=None):
         timeCursor = 0
         for packet in self.getPackets():

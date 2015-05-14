@@ -282,7 +282,10 @@ def run_morphing():
         rl = {'size': 0, 'time': 0}
         ov = {'size': 0, 'time': 0}
 
-        for wp in web_pages:
+        site_n = len(web_pages)
+        for site_i, wp in enumerate(web_pages):
+            if site_i % 10 == 0:
+                print('--> progress: {}/{}'.format(site_i, site_n))
             t = Datastore.get_trace(site_id=wp, limit=pt+pT, multi=True)
             for i, trace in enumerate(t):
                 countermeasure.dst_trace = None
@@ -301,7 +304,7 @@ def run_morphing():
         print('Classifying...')
         training_set = [classifier.traceToInstance(t) for t in training]
         testing_set = [classifier.traceToInstance(t) for t in testing]
-        cl = classifier.classify(run_index, training_set, testing_set)
+        cl = classifier.classify(str(run_index), training_set, testing_set)
         report_summary(cl, classifier=classifier, countermeasure=countermeasure)
 
 
