@@ -40,6 +40,14 @@ def readfile( month, day, hour, webpageId ):
     return trace
 
 def __constructAbsolutePath( month, day, hour, webpageId ):
+    """ Finds a pcap file for given site, among traces captured in the
+         specified (month, day, hour) and returns its os path.
+
+         If there is no such trace, None is returned
+
+        :return: str or None
+    """
+
     if not os.path.exists(config.PCAP_ROOT):
         raise Exception('Directory ('+config.PCAP_ROOT+') does not exist')
     

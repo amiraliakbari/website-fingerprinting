@@ -23,6 +23,8 @@ class PcapParserTestCase(unittest.TestCase):
         expected_trace.addPacket(Packet(Packet.DOWN, 118, 292))
         expected_trace.addPacket(Packet(Packet.UP, 158, 52))
 
+        self.assertListEqual(actualTrace.packets, expected_trace.packets)
+
 
 if __name__ == '__main__':
     unittest.main()

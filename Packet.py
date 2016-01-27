@@ -33,6 +33,15 @@ class Packet(object):
         self.__time = int(time)
         self.__length = int(length)
 
+    def __eq__(self, other):
+        return self.get_details() == other.get_details()
+
+    def __unicode__(self):
+        return '{}{} ({}ms)'.format('+' if self.__direction == self.UP else '-', self.__length, self.__time)
+
+    def __repr__(self):
+        return unicode(self)
+
     def get_details(self):
         return self.__direction, self.__time, self.__length
 

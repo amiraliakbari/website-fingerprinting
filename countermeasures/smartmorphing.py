@@ -13,7 +13,7 @@ class SmartMorphing(CounterMeasure):
     DEFAULT_PARAMS = {
         'CLUSTER_COUNT': 10,              # Total number of clusters
         'SECTION_COUNT': 10,              # Number of sections to divide traces into (#percentils)
-        'D': 7,                           # For selecting target cluster
+        'D': 3,                           # For selecting target cluster
         'alpha': .01,                     # For calculating split metric, determining the impact of bandwidth
         'BANDWIDTH_D_FACTOR': 25,         # For converting D to bandwidth overhead threshold (D2)
         'MIN_JACCARD_SIMILARITY': 0.7,    # Copying extra dst packets (even in case of size overhead) until output
@@ -35,26 +35,43 @@ class SmartMorphing(CounterMeasure):
         self.D = self.params['D']
         self.D2 = 100 + self.D * self.params['BANDWIDTH_D_FACTOR']
 
+    def open_db_connection(self):
+        if self.cur is None:
+            self.cur = self.conn.cursor()
+
+    def get_site_cluster(self, site_id, alg=None):
+        if alg is None:
+            alg = self.params['CLUSTERING_ALGORITHM']
+
+        self.open_db_connection()
+        self.cur.execute('SELECT MBC9, PAM10, SOM10 FROM ClustTable WHERE site_id=%s', [site_id])
+        site_row = self.cur.fetchone()
+        if site_row is None:
+            print '[ERROR] webpage#{} not found in DB, assuming src_cluster 1.'.format(site_id)
+            src_clust = 1
+        else:
+            src_clust = int(round(site_row[{'MBC9': 0, 'PAM10': 1, 'SOM10': 2}[alg]], 0))
+
+        # print('SRC-CLUST', src_clust)
+        return src_clust
+
     def apply(self):
         # print 'applying countermeasure'
+        # print('WEBPAGE', int(self.trace.webpage))
+
         if self.dst_trace is None:
-            if self.cur is None:
-                self.cur = self.conn.cursor()
-            alg = self.params['CLUSTERING_ALGORITHM']
-            # print('WEBPAGE', int(self.trace.webpage))
-            self.cur.execute('SELECT MBC9, PAM10, SOM10 FROM ClustTable WHERE site_id=%s', [int(self.trace.webpage)])
-            site_row = self.cur.fetchone()
-            if site_row is None:
-                print '[ERROR] webpage#{} not found in DB, assuming src_cluster 1.'.format(int(self.trace.webpage))
-                src_clust = 1
-            else:
-                src_clust = int(round(site_row[{'MBC9':0,'PAM10':1,'SOM10':2}[alg]], 0))
-            # print('SRC-CLUST', src_clust)
+            self.open_db_connection()
+
+            src_clust = self.get_site_cluster(int(self.trace.webpage))
+
             dst_clust = cluster_distances[src_clust][self.D - 1]
             # print('DST-CLUST', dst_clust)
+
+            alg = self.params['CLUSTERING_ALGORITHM']
             self.cur.execute('SELECT site_id FROM ClustTable WHERE {}=%s ORDER BY RAND() LIMIT 1'.format(alg), (dst_clust,))
             selected_site_id = int(round(self.cur.fetchone()[0], 0))
             # print('SELECTED-SITE', selected_site_id)
+
             sample_trace = Datastore.get_trace(site_id=selected_site_id)
             # print sample_trace
             self.dst_trace = sample_trace
